@@ -20,7 +20,7 @@ const IdeasService = {
         .where('id', id)
         .first()
     },
-  
+    
     deleteIdea(knex, id) {
       return knex('fmn_ideas')
         .where({ id })
