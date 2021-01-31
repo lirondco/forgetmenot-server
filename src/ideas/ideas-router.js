@@ -1,43 +1,35 @@
-const path = require('path')
 const express = require('express')
-const xss = require('xss')
+const path = require('path')
+const { default: xss } = require('xss')
+const { requireAuth } = require('../middleware/jwt-auth')
 const IdeasService = require('./ideas-service')
 
 const ideasRouter = express.Router()
-const jsonParser = express.json()
+const jsonBodyParser = express.json()
 
 const serialiseIdea = idea => ({
   id: idea.id,
+  list_id: idea.list_id,
+  user_id: idea.user_id,
   name: xss(idea.name),
   content: xss(idea.content),
-  posted_date: idea.posted_date,
-  list_id: idea.list_id,
-  user_id: idea.user_id
 })
 
 ideasRouter
   .route('/')
-  .get((req, res, next) => {
-    const knexInstance = req.app.get('db')
-    IdeasService.getAllIdeas(knexInstance)
-      .then(ideas => {
-        res.json(ideas.map(serialiseIdea))
-      })
-      .catch(next)
-  })
-  .post(jsonParser, (req, res, next) => {
-    const { name, content, posted_date, list_id, user_id } = req.body
-    const newIdea = { name, content, list_id, user_id }
+  .all(requireAuth)
+  .post(jsonBodyParser, (req, res, next) => {
+    const { user } = req
+    const { list_id, content, name } = req.body
+    const newIdea = { list_id, content, name }
 
-    for (const [key, value] of Object.entries(newIdea)) {
-      if (value == null) {
+    for (const [key, value] of Object.entries(newIdea))
+      if (value == null)
         return res.status(400).json({
-          error: { message: `Missing '${key}' in request body` }
+          error: `Missing '${key}' in request body`
         })
-        }
-    }
 
-    newIdea.posted_date = posted_date;
+    newIdea.user_id = user.id
 
     IdeasService.insertIdea(
       req.app.get('db'),
@@ -46,62 +38,78 @@ ideasRouter
       .then(idea => {
         res
           .status(201)
-          .location(path.posix.join(req.originalUrl, `/${idea.id}`))
-          .json(serialiseIdea(idea))
+          .location(path.posix.join(req.originalUrl, idea.id))
+          .json({
+            ...idea,
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              date_created: user.date_created,
+            }
+          })
       })
       .catch(next)
   })
 
-
 ideasRouter
   .route('/:idea_id')
+  .all(requireAuth)
   .all((req, res, next) => {
     IdeasService.getById(
       req.app.get('db'),
       req.params.idea_id
     )
       .then(idea => {
-        if (!idea) {
+        if (!idea)
           return res.status(404).json({
-            error: { message: `Idea doesn't exist` }
+            error: `Idea doesn't exist`
           })
-        }
         res.idea = idea
         next()
       })
       .catch(next)
   })
-  .get((req, res, next) => {
+  .get((req, res) => {
     res.json(serialiseIdea(res.idea))
   })
-  .delete((req, res, next) => {
-    IdeasService.deleteIdea(
-      req.app.get('db'),
-      req.params.idea_id
-    )
-      .then(numRowsAffected => {
-        res.status(204).end()
-      })
-      .catch(next)
-  })
-  .patch(jsonParser, (req, res, next) => {
-    const { name, content, posted_date } = req.body
-    const ideaToUpdate = { name, content, posted_date }
-
-    const numberOfValues = Object.values(ideaToUpdate).filter(Boolean).length
-    if (numberOfValues === 0)
+  .patch(jsonBodyParser, (req, res, next) => {
+    const { name, content } = req.body
+    if (name == null || content == null )
       return res.status(400).json({
-        error: {
-          message: `Request body must contain either 'name' or 'content'`
-        }
+        error: `Request body must contain 'text' or 'content'`
       })
+
+    if (res.idea.user_id !== req.user.id)
+      return res.status(400).json({
+        error: `Idea can only be updated by owner`
+      })
+
+    const newFields = {}
+    if (name) newFields.name = name
+    if (content) newFields.content = content
 
     IdeasService.updateIdea(
       req.app.get('db'),
       req.params.idea_id,
-      ideaToUpdate
+      newFields
     )
-      .then(numRowsAffected => {
+      .then(() => {
+        res.status(204).end()
+      })
+      .catch(next)
+  })
+  .delete((req, res, next) => {
+    if (res.idea.user_id !== req.user.id)
+      return res.status(400).json({
+        error: `Idea can only be updated by owner`
+      })
+
+    IdeasService.deleteIdea(
+      req.app.get('db'),
+      req.params.idea_id
+    )
+      .then(() => {
         res.status(204).end()
       })
       .catch(next)

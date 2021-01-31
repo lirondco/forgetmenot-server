@@ -2,6 +2,8 @@ const path = require('path')
 const express = require('express')
 const xss = require('xss')
 const UsersService = require('./users-service')
+const AuthService = require('../auth/auth-service')
+const { requireAdmin, requireAuth } = require('../middleware/jwt-auth')
 
 const usersRouter = express.Router()
 const jsonParser = express.json()
@@ -15,9 +17,8 @@ const serialiseUser = user => ({
 
 usersRouter
   .route('/')
-  .get((req, res, next) => {
-    const knexInstance = req.app.get('db')
-    UsersService.getAllUsers(knexInstance)
+  .get(requireAuth, requireAdmin, (req, res, next) => {
+    UsersService.getAll(req.app.get('db'))
       .then(users => {
         res.json(users.map(serialiseUser))
       })
@@ -25,93 +26,134 @@ usersRouter
   })
   .post(jsonParser, (req, res, next) => {
     const { username, password, email } = req.body
-    const newUser = { username, email }
-    const requiredFields = ['username', 'password', 'email']
-
-    for (const [key, value] of Object.entries(newUser)) {
-      if (value == null) {
+    
+    for (const field of ['username', 'password', 'email'])
+      if (!req.body[field] || req.body[field] == null) {
         return res.status(400).json({
-          error: { message: `Missing '${key}' in request body` }
+          error: `Missing ${field} in request body`
         })
       }
+
+    const passwordError = UsersService.validatePassword(password)
+
+    if (passwordError) {
+      return res.status(400).json({
+        error: passwordError
+      })
     }
-    
-    requiredFields.forEach(field => {
-        if(!req.body[field]) {
-            return res.status(400).json({
-                error: { message: `${field} is a required field`}
-            })
+
+    UsersService.hasUserWithUserName(
+      req.app.get('db'),
+      username
+    )
+      .then(hasUserWithUserName => {
+        if (hasUserWithUserName)
+          return res.status(400).json({
+            error: `User name already taken`
+          })
+
+        return AuthService.hashPassword(password)
+      })
+      .then(hashedPassword => {
+        const newUser = {
+          username,
+          password: hashedPassword,
+          email,
+          date_created: 'now()'
         }
+
+        return UsersService.insertUser(
+          req.app.get('db'),
+          newUser
+        )
+          .then(user => {
+            res
+              .status(201)
+              .location(path.posix.join(req.originalUrl, `/${user.id}`))
+              .json(serialiseUser(user))
+          })
+      })
+      .catch(next)
+  })
+
+  usersRouter
+    .route('/:user_id')
+    .all(requireAuth)
+    .all((req, res, next) => {
+      UsersService.getById(
+        req.app.get('db'),
+        req.params.user_id
+      )
+        .then(user => {
+          if (!user)
+            return res.status(404).json({
+              error: `User doesn't exist`
+            })
+            res.user = user
+            next()
+            return null
+        })  
+        .catch(next)
+    })
+    .get((req, res) => {
+      if (res.user.id !== req.user.id)
+        return res.status(400).json({
+          error: `Unauthorised access`
+        })
+      
+      res.json(serialiseUser(res.user))
     })
 
-    newUser.password = password;
+    .patch(jsonParser, (req, res, next) => {
+      const { email, password } = req.body
+      const userToUpdate = { email, password }
 
-    UsersService.insertUser(
-      req.app.get('db'),
-      newUser
-    )
-      .then(user => {
-        res
-          .status(201)
-          .location(path.posix.join(req.originalUrl, `/${user.id}`))
-          .json(serialiseUser(user))
-      })
-      .catch(next)
-  })
+      const numberOfValues = Object.values(userToUpdate).filter(Boolean).length
 
-usersRouter
-  .route('/:user_id')
-  .all((req, res, next) => {
-    UsersService.getById(
-      req.app.get('db'),
-      req.params.user_id
-    )
-      .then(user => {
-        if (!user) {
-          return res.status(404).json({
-            error: { message: `User doesn't exist` }
+      if (numberOfValues === 0) 
+        return res.status(400).json({
+          error: `Request body must contain either 'email', 'password'`
+        })
+      
+      if (res.user.id !== req.user.id)
+        return res.status(400).json({
+          error: `User can only be updated by self`
+        })
+
+        const passwordError = UsersService.validatePassword(userToUpdate.password)
+
+        if (passwordError) {
+          return res.status(400).json({
+            error: passwordError
           })
         }
-        res.user = user
-        next()
-      })
-      .catch(next)
-  })
-  .get((req, res, next) => {
-    res.json(serialiseUser(res.user))
-  })
-  .delete((req, res, next) => {
-    UsersService.deleteUser(
-      req.app.get('db'),
-      req.params.user_id
-    )
-      .then(numRowsAffected => {
-        res.status(204).end()
-      })
-      .catch(next)
-  })
-  .patch(jsonParser, (req, res, next) => {
-    const { username, password, email } = req.body
-    const userToUpdate = { username, password, email }
 
-    const numberOfValues = Object.values(userToUpdate).filter(Boolean).length
-    if (numberOfValues === 0) {
-      return res.status(400).json({
-        error: {
-          message: `Request body must contain either 'username', 'password' or 'email'`
-        }
-      })
-    }
+        return UsersService.updateUser(
+          req.app.get('db'),
+          req.params.user_id,
+          userToUpdate
+        )
+        .then(() => {
+          res.status(204).end()
+        })
+        .catch(next)
+    })
 
-    UsersService.updateUser(
-      req.app.get('db'),
-      req.params.user_id,
-      userToUpdate
-    )
-      .then(numRowsAffected => {
-        res.status(204).end()
-      })
-      .catch(next)
-  })
+    .delete((req, res, next) => {
+      if (res.user.id !== req.user.id)
+        return res.status(400).json({
+          error: `User can only be deleted by owner`
+        })
+
+        UsersService.deleteUser(
+          req.app.get('db'),
+          req.params.user_id
+        )
+          .then(numRowsAffected => {
+            res.status(204).end()
+          })
+          .catch(next)
+    })
+
 
 module.exports = usersRouter

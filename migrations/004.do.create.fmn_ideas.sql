@@ -3,8 +3,8 @@ CREATE TABLE fmn_ideas (
     "name" TEXT NOT NULL,
     content TEXT NOT NULL,
     posted_date TIMESTAMPTZ DEFAULT now() NOT NULL,
-    list_id UUID
+    list_id INTEGER
         REFERENCES fmn_lists(id) ON DELETE CASCADE NOT NULL,
-    user_id UUID
+    user_id INTEGER
         REFERENCES fmn_users(id) ON DELETE CASCADE NOT NULL
 );

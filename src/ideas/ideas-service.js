@@ -1,37 +1,31 @@
+
 const IdeasService = {
-    getAllIdeas(knex) {
-      return knex.select('*').from('fmn_ideas')
-    },
-  
-    insertIdea(knex, newIdea) {
-      return knex
-        .insert(newIdea)
-        .into('fmn_ideas')
-        .returning('*')
-        .then(rows => {
-          return rows[0]
-        })
-    },
-  
-    getById(knex, id) {
-      return knex
-        .from('fmn_ideas')
-        .select('*')
-        .where('id', id)
-        .first()
-    },
-    
-    deleteIdea(knex, id) {
-      return knex('fmn_ideas')
-        .where({ id })
-        .delete()
-    },
-  
-    updateIdea(knex, id, newIdeaFields) {
-      return knex('fmn_ideas')
-        .where({ id })
-        .update(newIdeaFields)
-    },
-  }
-  
-  module.exports = IdeasService
+  getById(db, id) {
+    return db
+      .from('fmn_ideas')
+      .where({ id })
+      .first()
+  },
+
+  insertIdea(db, newIdea) {
+    return db
+      .insert(newIdea)
+      .into('fmn_ideas')
+      .returning('*')
+      .then(([idea]) => idea)
+  },
+
+  updateIdea(db, id, newIdeaFields) {
+    return db('fmn_ideas')
+      .where({ id })
+      .update(newIdeaFields)
+  },
+
+  deleteIdea(db, id) {
+    return db('fmn_ideas')
+      .where({ id })
+      .delete()
+  },
+}
+
+module.exports = IdeasService

@@ -5,4 +5,5 @@ VALUES
   ('karen', 'password',
     'whereisthemanager@protonmail.com'),
   ('jessica33', 'secret',
-    'j.low@outlook.com');
+    'j.low@outlook.com'),
+  ('admin', 'admin', 'liron.dco@gmail.com');
