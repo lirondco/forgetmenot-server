@@ -1,6 +1,6 @@
 const express = require('express')
 const path = require('path')
-const { default: xss } = require('xss')
+const xss = require('xss')
 const { requireAuth } = require('../middleware/jwt-auth')
 const IdeasService = require('./ideas-service')
 
@@ -38,7 +38,7 @@ ideasRouter
       .then(idea => {
         res
           .status(201)
-          .location(path.posix.join(req.originalUrl, idea.id))
+          .location(path.posix.join(req.originalUrl, `${idea.id}`))
           .json({
             ...idea,
             user: {
@@ -71,14 +71,14 @@ ideasRouter
       .catch(next)
   })
   .get((req, res) => {
+    if (res.idea.user_id !== req.user.id)
+    return res.status(401).json({
+      error: `Unauthorized access`
+    })
     res.json(serialiseIdea(res.idea))
   })
   .patch(jsonBodyParser, (req, res, next) => {
-    const { name, content } = req.body
-    if (name == null || content == null )
-      return res.status(400).json({
-        error: `Request body must contain 'text' or 'content'`
-      })
+    const { name, content, list_id } = req.body
 
     if (res.idea.user_id !== req.user.id)
       return res.status(400).json({
@@ -88,6 +88,7 @@ ideasRouter
     const newFields = {}
     if (name) newFields.name = name
     if (content) newFields.content = content
+    if (list_id) newFields.list_id = list_id
 
     IdeasService.updateIdea(
       req.app.get('db'),

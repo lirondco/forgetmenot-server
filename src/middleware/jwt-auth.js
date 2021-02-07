@@ -7,7 +7,7 @@ function requireAuth(req, res, next) {
   if (authToken.toLowerCase().startsWith('bearer ')) {
     bearerToken = authToken.slice(7, authToken.length)
   } else {
-    return res.status(401).json({ error: 'Unauthorised request' })
+    return res.status(401).json({ error: 'Missing bearer token' })
   }
 
   try {
@@ -34,7 +34,7 @@ function requireAuth(req, res, next) {
 
 function requireAdmin(req, res, next) {
   if (req.user.username !== 'admin1') {
-    return res.status(401).json({ error: 'Unauthorized request' })
+    return res.status(401).json({ error: 'Unauthorised request' })
   }
 
   return next()

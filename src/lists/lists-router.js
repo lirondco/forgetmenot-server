@@ -3,6 +3,7 @@ const path = require('path')
 const xss = require('xss')
 const { requireAuth } = require('../middleware/jwt-auth')
 const ListsService = require('./lists-service')
+const config = require('../config')
 
 const listsRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -16,10 +17,14 @@ const serialiseList = list => ({
 })
 
 listsRouter.route('/')
+  .all(requireAuth)
   .get((req, res, next) => {
     ListsService.getAllAdv(req.app.get('db'))
       .then(lists => {
-        res.json(lists.map(serialiseList))
+        const newLists = lists.filter(list => 
+          list.user.id === req.user.id
+        )
+        return res.json(newLists.map(serialiseList))
       })
       .catch(next)
   })
@@ -27,11 +32,11 @@ listsRouter.route('/')
     const { name, theme } = req.body
     const newList = { name, theme }
 
-    for (const [key, value] of Object.entries(newList))
-      if (value == null)
-        return res.status(400).json({
-          error: `Missing '${key}' in request body`
-        })
+    if(!req.body.name) {
+      return res.status(400).json({
+        error: `Missing 'name' in request body`
+      })
+    }
 
     newList.user_id = req.user.id
 
@@ -42,7 +47,7 @@ listsRouter.route('/')
       .then(list => {
         res
           .status(201)
-          .location(path.posix.join(req.originalUrl, list.id))
+          .location(path.posix.join(req.originalUrl, toString(list.id)))
           .json(serialiseList({
             ...list,
             user: {
@@ -60,6 +65,10 @@ listsRouter.route('/:list_id/')
   .all(requireAuth)
   .all(checkListExists)
   .get((req, res) => {
+    if (res.list.user.id !== req.user.id)
+    return res.status(401).json({
+      error: `Unauthorized access`
+    })
     res.json(serialiseList(res.list))
   })
   // TODO: permissions by role
@@ -110,12 +119,17 @@ listsRouter.route('/:list_id/ideas/')
   .all(requireAuth)
   .all(checkListExists)
   .get((req, res, next) => {
+    if (res.list.user.id !== req.user.id)
+    return res.status(401).json({
+      error: `Unauthorized access`
+    })
     ListsService.getIdeasForList(
       req.app.get('db'),
       req.params.list_id
     ).then(ideas => {
       res.json(ideas)
     })
+    .then(console.log(req.user))
     .catch(next)
   })
 
@@ -130,6 +144,7 @@ async function checkListExists(req, res, next) {
       return res.status(404).json({
         error: `List doesn't exist`
       })
+      
 
     res.list = list
     next()

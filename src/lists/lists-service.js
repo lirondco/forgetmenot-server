@@ -69,6 +69,7 @@ const ListsService = {
       .select(
         'idea.id',
         'idea.name',
+        'idea.content',
         'idea.posted_date',
         db.raw(
           `row_to_json(
