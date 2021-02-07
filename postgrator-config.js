@@ -1,12 +1,7 @@
 require('dotenv').config();
 
 module.exports = {
-  ssl: true,
-    extra: {
-      ssl: {
-        rejectUnauthorized: false
-      },
-    },
+  "ssl": !!process.env.SSL,
   "migrationsDirectory": "migrations",
   "driver": "pg",
   "connectionString": (process.env.NODE_ENV === 'test')
