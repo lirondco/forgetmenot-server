@@ -22,7 +22,7 @@ GET - returns lists owned by the user.
 
 POST - adds a new list. Must have a 'name' and an optional 'theme', which is an unimplemented styling feature. 
 
-PATCH - modifies a list and its theme. The fetch method works but it's currently unimplemented in the client app. 
+PATCH - modifies a list and its theme.
 
 /lists/:list_id
 
@@ -36,4 +36,4 @@ GET - returns all ideas under that list
 
 POST - adds a new idea to a list. Must have a 'name', 'content', and an existing 'list_id'
 
-PATCH - modifies an idea. The fetch method is fully functional but it's currently unimplemented in the app.
+PATCH - modifies an idea.
