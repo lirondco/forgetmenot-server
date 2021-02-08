@@ -1,26 +1,39 @@
-# Express Boilerplate!
+# FORGETMENOT APP SERVER
 
-This is a boilerplate project used for starting new projects!
+This is the server I'm using for my Capstone Project. It stores data for lists, ideas, and user information. 
 
-## Set up
+## FETCH REQUESTS
 
-Complete the following steps to start a new project (NEW-PROJECT-NAME):
 
-1. Clone this repository to your local machine `git clone BOILERPLATE-URL NEW-PROJECTS-NAME`
-2. `cd` into the cloned repository
-3. Make a fresh start of the git history for this project with `rm -rf .git && git init`
-4. Install the node dependencies `npm install`
-5. Move the example Environment file to `.env` that will be ignored by git and read by the express server `mv example.env .env`
-6. Edit the contents of the `package.json` to use NEW-PROJECT-NAME instead of `"name": "express-boilerplate",`
 
-## Scripts
+Base URL: https://calm-bayou-27862.herokuapp.com/api
 
-Start the application `npm start`
+/users
 
-Start nodemon for the application `npm run dev`
+POST - create new users. Must have a username, password, and a valid email address. Additionally, passwords must not start or end with empty spaces, less than 72 characters, and must contain at least one upper case, lower case, number, and special character each.
 
-Run the tests `npm test`
+/auth/login
 
-## Deploying
+POST - acquire a token by supplying a valid username and password. 
 
-When your new project is ready for deployment, add a new Heroku application with `heroku create`. This will make a new git remote called "heroku" and you can then `npm run deploy` which will push to this remote's main branch.
+/lists
+
+GET - returns lists owned by the user. 
+
+POST - adds a new list. Must have a 'name' and an optional 'theme', which is an unimplemented styling feature. 
+
+PATCH - modifies a list and its theme. The fetch method works but it's currently unimplemented in the client app. 
+
+/lists/:list_id
+
+GET - returns specific list but only if it's owned by the owner. 
+
+/lists/:list_id/ideas
+
+GET - returns all ideas under that list
+
+/ideas
+
+POST - adds a new idea to a list. Must have a 'name', 'content', and an existing 'list_id'
+
+PATCH - modifies an idea. The fetch method is fully functional but it's currently unimplemented in the app.
