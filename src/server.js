@@ -4,7 +4,7 @@ const pg = require ('pg')
 const { PORT, DATABASE_URL } = require('./config')
 require("dotenv").config();
 
-pg.defaults.ssl = process.env.NODE_ENV === "production"
+//pg.defaults.ssl = process.env.NODE_ENV === "production"
 const db = knex({
   client: 'pg',
   connection: DATABASE_URL,
