@@ -28,6 +28,7 @@ listsRouter
               user: {
                 id: req.user.id,
                 username: req.user.username,
+                // used req.user instead of list.user in order to match the date format to JS ISO format instead of PostgreSQL's
                 date_created: req.user.date_created,
               },
             })
@@ -60,6 +61,7 @@ listsRouter
                 id: req.user.id,
                 username: req.user.username,
                 email: req.user.email,
+                // used req.user instead of list.user in order to match the date format to JS ISO format instead of PostgreSQL's
                 date_created: req.user.date_created,
               },
             })
@@ -88,7 +90,7 @@ listsRouter
       })
     );
   })
-  // TODO: permissions by role
+
   .patch(jsonBodyParser, (req, res, next) => {
     const { name, theme } = req.body;
     const listToUpdate = { name, theme };
@@ -111,7 +113,7 @@ listsRouter
       })
       .catch(next);
   })
-  // TODO: permissions by role
+
   .delete((req, res, next) => {
     if (res.list.user.id !== req.user.id)
       return res.status(400).json({
