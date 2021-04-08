@@ -48,16 +48,24 @@ const UsersService = {
           return 'Password must not start or end with empty spaces'
         }
         if (password.length < 8) {
-          return 'Password be longer than 8 characters'
+          return 'Password must be longer than 8 characters'
         }
         if (password.length > 72) {
-          return 'Password be less than 72 characters'
+          return 'Password must be less than 72 characters'
         }
         if (!REGEX_UPPER_LOWER_NUMBER_SPECIAL.test(password)) {
           return 'Password must contain one upper case, lower case, number and special character'
         }
         return null
       },
+      validateEmail(email) {
+        if (mail.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)) 
+        {
+            return null
+        }
+
+        return 'You have entered an invalid email address'
+      }
  }
 
  module.exports = UsersService

@@ -3,8 +3,6 @@ const path = require('path')
 const xss = require('xss')
 const { requireAuth } = require('../middleware/jwt-auth')
 const ListsService = require('./lists-service')
-const config = require('../config')
-
 const listsRouter = express.Router()
 const jsonBodyParser = express.json()
 
@@ -24,7 +22,13 @@ listsRouter.route('/')
         const newLists = lists.filter(list => 
           list.user.id === req.user.id
         )
-        return res.json(newLists.map(serialiseList))
+        return res.json(newLists.map(list => serialiseList({
+          ...list,
+          user: {
+            id: req.user.id,
+            username: req.user.username,
+            date_created: req.user.date_created
+        }})))
       })
       .catch(next)
   })
@@ -69,7 +73,14 @@ listsRouter.route('/:list_id/')
     return res.status(401).json({
       error: `Unauthorized access`
     })
-    res.json(serialiseList(res.list))
+    res.json(serialiseList({
+      ...res.list,
+      user: {
+        id: req.user.id,
+        username: req.user.username,
+        date_created: req.user.date_created
+      }
+    }))
   })
   // TODO: permissions by role
   .patch(jsonBodyParser, (req, res, next) => {
@@ -129,7 +140,7 @@ listsRouter.route('/:list_id/ideas/')
     ).then(ideas => {
       res.json(ideas)
     })
-    .then(console.log(req.user))
+    .then()
     .catch(next)
   })
 

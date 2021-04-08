@@ -74,7 +74,7 @@ const ListsService = {
         db.raw(
           `row_to_json(
             (SELECT tmp FROM (
-              SELECT usr.id, usr.username, usr.date_created
+              SELECT usr.id, usr.username
             ) tmp)
           ) AS "user"`
         )

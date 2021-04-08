@@ -33,7 +33,7 @@ function requireAuth(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
-  if (req.user.username !== 'admin1') {
+  if (req.user.username !== 'lironadmin') {
     return res.status(401).json({ error: 'Unauthorised request' })
   }
 

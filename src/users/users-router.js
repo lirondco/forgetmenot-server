@@ -10,7 +10,7 @@ const jsonParser = express.json()
 
 const serialiseUser = user => ({
   id: user.id,
-  email: xss(user.fullname),
+  email: xss(user.email),
   username: xss(user.username),
   date_created: user.date_created,
 })

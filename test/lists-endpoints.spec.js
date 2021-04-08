@@ -45,8 +45,8 @@ describe('Lists Endpoints', function() {
           testIdeas,
         )
       )
-//skipping the following test. Test works just fine except for the date.
-      it.skip('responds with 200 and the specified list', () => {
+
+      it('responds with 200 and the specified list', () => {
         const listId = 1
         const expectedList = helpers.makeExpectedList(
           testUsers,
@@ -87,8 +87,7 @@ describe('Lists Endpoints', function() {
         )
       )
 
-//again, test works except for the date
-      it.skip('responds with 200 and the specified ideas', () => {
+      it('responds with 200 and the specified ideas', () => {
         const listId = 1
         const expectedIdeas = helpers.makeExpectedListIdeas(
           testUsers, listId, testIdeas

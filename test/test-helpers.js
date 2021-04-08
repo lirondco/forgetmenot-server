@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const { getDefaultDirectives } = require('helmet/dist/middlewares/content-security-policy');
 const jwt = require('jsonwebtoken')
 
 function makeUsersArray() {
@@ -9,24 +8,28 @@ function makeUsersArray() {
         username: 'test-user-1',
         email: 'testuser1@email.com',
         password: 'password',
+        date_created: new Date('2021-04-08T03:04:05.366Z')
       },
       {
         id: 2,
         username: 'test-user-2',
         email: 'testuser2@email.com',
         password: 'password',
+        date_created: new Date('2021-04-08T03:04:05.366Z')
       },
       {
         id: 3,
         username: 'test-user-3',
         email: 'testuser3@email.com',
         password: 'password',
+        date_created: new Date('2021-04-08T03:04:05.366Z')
       },
       {
         id: 4,
         username: 'test-user-4',
         email: 'testuser4@email.com',
         password: 'password',
+        date_created: new Date('2021-04-08T03:04:05.366Z')
       },
     ]
   }
@@ -66,6 +69,7 @@ function makeUsersArray() {
         id: 1,
         name: 'First test idea!',
         content: 'First test idea content',
+        posted_date: new Date('2021-04-08T03:26:44.349Z'),
         list_id: lists[0].id,
         user_id: users[0].id,
       },
@@ -73,6 +77,7 @@ function makeUsersArray() {
         id: 2,
         name: 'Second test idea!',
         content: 'Second test idea content',
+        posted_date: new Date('2021-04-08T03:26:44.349Z'),
         list_id: lists[0].id,
         user_id: users[1].id,
       },
@@ -80,6 +85,7 @@ function makeUsersArray() {
         id: 3,
         name: 'Third test idea!',
         content: 'Third test idea content',
+        posted_date: new Date('2021-04-08T03:26:44.349Z'),
         list_id: lists[0].id,
         user_id: users[2].id,
       },
@@ -87,6 +93,7 @@ function makeUsersArray() {
         id: 4,
         name: 'Fourth test idea!',
         content: 'Fourth test idea content',
+        posted_date: new Date('2021-04-08T03:26:44.349Z'),
         list_id: lists[0].id,
         user_id: users[3].id,
       },
@@ -94,6 +101,7 @@ function makeUsersArray() {
         id: 5,
         name: 'Fifth test idea!',
         content: 'Fifth test idea content',
+        posted_date: new Date('2021-04-08T03:26:44.349Z'),
         list_id: lists[lists.length - 1].id,
         user_id: users[0].id,
       },
@@ -101,6 +109,7 @@ function makeUsersArray() {
         id: 6,
         name: 'Sixth test idea!',
         content: 'Sixth test idea content',
+        posted_date: new Date('2021-04-08T03:26:44.349Z'),
         list_id: lists[lists.length - 1].id,
         user_id: users[2].id,
       },
@@ -108,6 +117,7 @@ function makeUsersArray() {
         id: 7,
         name: 'Seventh test idea!',
         content: 'Seventh test idea content',
+        posted_date: new Date('2021-04-08T03:26:44.349Z'),
         list_id: lists[3].id,
         user_id: users[0].id,
       },
@@ -130,7 +140,7 @@ function makeUsersArray() {
       user: {
         id: user.id,
         username: user.username,
-        date_created: new Date()
+        date_created: new Date('2021-04-08T03:04:05.366Z').toISOString()
       },
     }
   }
@@ -146,12 +156,10 @@ function makeUsersArray() {
         id: idea.id,
         name: idea.name,
         content: idea.content,
-        posted_date: new Date(),
+        posted_date: new Date('2021-04-08T03:26:44.349Z').toISOString(),
         user: {
           id: ideaUser.id,
-          username: ideaUser.user_name,
-          email: ideaUser.email,
-          date_created: new Date(),
+          username: ideaUser.username,
         }
       }
     })
